@@ -1,9 +1,10 @@
-name = "template"
+
+name = "AniGFAna"
 version = "0.1.0"
 license = "MIT"
-author = "JorgeG94"
-maintainer = "jorgegalvez1694@gmail.com"
-copyright = "Copyright 2024, JorgeG94"
+author = "Ryan Bignell"
+maintainer = "Ryan07bignell+github@gmail.com"
+copyright = "Copyright 2025, Ryan Bignell"
 [preprocess]
 [preprocess.cpp]
 suffixes = ["F90", "f90"]
@@ -11,26 +12,44 @@ suffixes = ["F90", "f90"]
 source-dir = "src"
 [build]
 auto-executables = true
-auto-tests = false
+auto-tests = true
 #auto-examples = true
-module-naming = false
-[[test]]
-name = "sample"
-source-dir = "test"
-main = "main_tests.f90"
+module-naming = false  # breaks for stdlib + more
+#[[test]]
+#name = "sample"
+#source-dir = "test"
+#main = "main_tests.f90"
 [install]
 library = true
 
 [fortran]
-implicit-typing = true
-implicit-external = true
+implicit-typing = false
+implicit-external = false
 source-form = "free"
 
 [dependencies]
-test-drive.git = "https://github.com/fortran-lang/test-drive"
+stdlib = '*'
+test-drive = { git = "https://github.com/fortran-lang/test-drive.git" }
+bspline-fortran = { git="https://github.com/jacobwilliams/bspline-fortran.git" }
+pyplot-fortran = { git="https://github.com/jacobwilliams/pyplot-fortran.git" }
+roots-fortran = { git="https://github.com/jacobwilliams/roots-fortran.git" }
+toml-f 	    = { git = "https://github.com/toml-f/toml-f" }
+csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
+#FJsample = { git="https://github.com/RJabi/FJsample.git", preprocess.cpp.macros=['LOCALITYSUPPORT=1'] }  # use if using modern compiler (gfortran15+, IFX 2024+, NVHPC)
+FJsample = { git="https://github.com/RJabi/FJsample.git"}
+
 
 [extra.fortitude.check]
-select = ["C", "E", "S"]
-ignore = ["C003"]
-line-length = 132
-per-file-ignores = { "pic_blas_interfaces.F90" = ["C071"] }
+ignore = [
+       "MOD011",  # allows (/ /)
+       "MOD021",  # allows .gt.
+#       "C132",    # allows default public accessiblility
+#       "E001",    # ignores syntax errors - useful as pre-processor support is tough
+       "S241",    # allows strings with single quotes,
+#       "C011",    # allows missing default in select case statements
+       ]
+preview = true
+line-length = 132  # 132 is apparently an implicit standard in compilers?
+	      	   # not sure this is actually working here...
+[extra.fortitude.check.per-file-ignores]
+"src/colours.f90" = ["C132"]   # allows default public accessibility
