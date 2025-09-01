@@ -42,8 +42,8 @@ contains
             xiBase = replace_all(xiPath, "RE", TRIM(xiList(xx)))
             anaFlow = replace_all(runName(aa), "XI", TRIM(xiList(xx)))
             anaFlow = replace_all(anaFlow, "NAME", TRIM(runName(aa)))
-            anaFlow = replace_all(anaFlow, "EPS", trim(eps))
-            anaFlow = replace_all(anaFlow, "TMAX", trim(tmax))
+            anaFlow = replace_all(anaFlow, "EPS", TRIM(eps))
+            anaFlow = replace_all(anaFlow, "TMAX", TRIM(tmax))
             do ii = 1, SIZE(iconList(aa)%rag)
                ! Convert into to string
                write (iconStr, '(i0)') iconList(aa)%rag(ii)
@@ -218,8 +218,8 @@ contains
    end subroutine w0Calcs
 
    subroutine processToml(tomlName, producer, eps, tMax, anaDir, xiPath, xiList, &
-        xiNumList, runName, dataName, iStart, iEnd, iSkip, &
-        iSep, targws, targwt, w0PhysMean, w0PhysErr)
+                          xiNumList, runName, dataName, iStart, iEnd, iSkip, &
+                          iSep, targws, targwt, w0PhysMean, w0PhysErr)
       ! Get all the values for the toml
       ! this toml is so much harder than doing it in python...
       character(len=*), intent(in) :: tomlName
@@ -266,18 +266,23 @@ contains
       ! Make an array of the xi in numbers
       xiNumList = to_num(xiList, xiNumList)
       ! If xiREList is present, then put that in xiList instead
-      call get_value(table, toml_path("data", "xiREList"), top_array, requested=.false., stat=tomlStatus)
-      if( tomlStatus == toml_stat%success) then
+      !call get_value(table, toml_path("data", "xiREList"), top_array, requested=.false., stat=tomlStatus)
+      call get_value(table, toml_path("data", "xiREList"), top_array, stat=tomlStatus)
+      if (tomlStatus == toml_stat%success) then
          if (LEN(top_array) == data_len) then
-            do ii=1, data_len
+            do ii = 1, data_len
                call get_value(top_array, ii, strRead)
                xiList(ii) = strRead
-               deallocate(strRead)
+               deallocate (strRead)
             end do
+         else if (LEN(top_array) == 0) then
+            ! Requested does not seem to be working properly..
+            ! So this is a second test of sorts
+            xiList = xiList
          else
-            write(*,*) 'len(xiREList) != len(xiList)'
-            write(*,*) LEN(top_array), data_len
-            write(*,*) 'Exiting'
+            write (*, *) 'len(xiREList) != len(xiList)'
+            write (*, *) LEN(top_array), data_len
+            write (*, *) 'Exiting'
             stop
          end if
       end if
@@ -292,8 +297,11 @@ contains
       end do
       ! dataName
       ! dataName is optional
-      call get_value(table, toml_path("data", "dataName"), top_array, requested=.false., stat=tomlStatus)
-      if (tomlStatus /= toml_stat%success) then
+      ! Requested not working properly...
+      ! Still giving a success even when not found
+      !call get_value(table, toml_path("data", "dataName"), top_array, requested=.false., stat=tomlStatus)
+      call get_value(table, toml_path("data", "dataName"), top_array, stat=tomlStatus)
+      if (tomlStatus /= toml_stat%success .OR. LEN(top_array) == 0) then
          ! Fill dataName with runName instead as dataName not found
          call get_value(table, toml_path("data", "runName"), top_array)
          data_len = LEN(top_array)
@@ -306,23 +314,23 @@ contains
       else
          ! dataName exists
          ! dataName is same length as runName
-         allocate(dataName(data_len))
+         allocate (dataName(data_len))
          if (LEN(top_array) == 1) then
             ! Fill all with identical name
             call get_value(top_array, 1, strRead)
             dataName(:) = strRead
-            deallocate(strRead)
+            deallocate (strRead)
          else if (LEN(top_array) == data_len) then
             ! possibily unique names per runName
-            do ii=1, LEN(top_array)
+            do ii = 1, LEN(top_array)
                call get_value(top_array, ii, strRead)
                dataName(ii) = strRead
-               deallocate(strRead)
+               deallocate (strRead)
             end do
          else
-            write(*,*) 'dataName must either have length 1 (still a list)'
-            write(*,*) 'or must have equal length as runName'
-            write(*,*) 'Exiting'
+            write (*, *) 'dataName must either have length 1 (still a list)'
+            write (*, *) 'or must have equal length as runName'
+            write (*, *) 'Exiting'
             stop
          end if
       end if
