@@ -274,7 +274,7 @@ program w0RE_boot
    call csvf%initialize(verbose=.TRUE.)
    call csvf%open(TRIM(anaDir)//'/FortBoots.csv', n_cols=5, status_ok=status_ok)
    !add header
-   call csvf%add(['config'])
+   call csvf%add(['bootID'])
    call csvf%add(['xig', 'a_s', 'a_t'])
    call csvf%add(['w0ij(xig)'])
    call csvf%next_row()
@@ -283,15 +283,17 @@ program w0RE_boot
    call csvf%add([xig(0), a_s(0), a_t(0), 1.0_WP / (a_s(0) / w0PhysMean)])
    call csvf%next_row()
    icon = 1
-   do aa = 1, SIZE(runName)
-      do ii = 1, SIZE(iconList(aa)%rag)
-         write (iconStr, '(i0)') iconList(aa)%rag(ii)
-         call csvf%add(TRIM(runName(aa))//'n'//TRIM(iconStr))
-         call csvf%add([xig(icon), a_s(icon), a_t(icon), 1.0_WP / (a_s(icon) / w0PhysMean)])
-         call csvf%next_row()
-         icon = icon + 1
-      end do
+   !do aa = 1, SIZE(runName)
+   do ii = 1, nboot !SIZE(iconList(aa)%rag)
+      !write (iconStr, '(i0)') iconList(aa)%rag(ii)
+      !write (iconStr, '(i0)') icon
+      !call csvf%add(TRIM(runName(aa))//'n'//TRIM(iconStr))
+      call csvf%add(icon)
+      call csvf%add([xig(icon), a_s(icon), a_t(icon), 1.0_WP / (a_s(icon) / w0PhysMean)])
+      call csvf%next_row()
+      icon = icon + 1
    end do
+   !end do
    call csvf%close(status_ok)
    ! The xi dependent
    do xx = 1, SIZE(xiList)
@@ -300,7 +302,7 @@ program w0RE_boot
       ! add header
       ! These are separated so that they don't have spaces around them...
       ! Fortran array constructor limitation that
-      call csvf%add(['config'])
+      call csvf%add(['bootID'])
       call csvf%add(['flowTimeForW0ij'])
       call csvf%add(['w0ij', 'w04i'])
       call csvf%add(['RE'])
@@ -311,17 +313,58 @@ program w0RE_boot
       call csvf%next_row()
       ! add the bootstraps
       icon = 1
-      do aa = 1, SIZE(runName)
-         do ii = 1, SIZE(iconList(aa)%rag)
-            write (iconStr, '(i0)') iconList(aa)%rag(ii)
-            call csvf%add(TRIM(runName(aa))//'n'//TRIM(iconStr))
-            call csvf%add([flowTimeForW0(xx, icon), w0ij(xx, icon), w04i(xx, icon), RE(xx, icon)])
-            call csvf%next_row()
-            icon = icon + 1
-         end do
+      !do aa = 1, SIZE(runName)
+      do ii = 1, nboot!SIZE(iconList(aa)%rag)
+         !write (iconStr, '(i0)') iconList(aa)%rag(ii)
+         !call csvf%add(TRIM(runName(aa))//'n'//TRIM(iconStr))
+         call csvf%add(icon)
+         call csvf%add([flowTimeForW0(xx, icon), w0ij(xx, icon), w04i(xx, icon), RE(xx, icon)])
+         call csvf%next_row()
+         icon = icon + 1
       end do
+      !end do
       call csvf%close(status_ok)
    end do
+
+   ! The mapping of bootstrap ID to sampleIDs
+   call csvf%initialize(verbose=.TRUE.)
+   call csvf%open(TRIM(anaDir)//'/FortBootSampleIDs.csv', n_cols=ncon + 1, status_ok=status_ok)
+   !add header
+   call csvf%add(['bootID'])
+   do aa = 1, ncon
+      write (iconStr, '(i0)') aa
+      call csvf%add(['ID'//TRIM(iconStr)])
+   end do
+   call csvf%next_row()
+   icon = 1
+   do ii = 1, nboot
+      ! Add the boot iD
+      call csvf%add(icon)
+      ! add all the sampleIDs used for that boot iD
+      do aa = 1, ncon
+         call csvf%add(sampleIDs(ii, aa))
+      end do
+      call csvf%next_row()
+      icon = icon + 1
+   end do
+   call csvf%close(status_ok)
+   ! and now map the sampleID to the configuration ID
+   call csvf%initialize(verbose=.TRUE.)
+   call csvf%open(TRIM(anaDir)//'/FortBootConfigIDs.csv', n_cols=2, status_ok=status_ok)
+   call csvf%add(['config'])
+   call csvf%add(['sampleID'])
+   call csvf%next_row()
+   icon = 1
+   do aa = 1, SIZE(runName)
+      do ii = 1, SIZE(iconList(aa)%rag)
+         call csvf%add(icon)
+         write (iconStr, '(i0)') iconList(aa)%rag(ii)
+         call csvf%add(TRIM(runName(aa))//'n'//TRIM(iconStr))
+         call csvf%next_row()
+         icon = icon + 1
+      end do
+   end do
+   call csvf%close(status_ok)
 
    deallocate (runName, xiList, xiNumList)
    deallocate (iStart, iEnd, iSep, iSkip)
