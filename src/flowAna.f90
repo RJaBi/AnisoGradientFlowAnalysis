@@ -3,7 +3,7 @@ module AniGFAna__flowAna
    use AniGFAna__splineOperations, only: setupSplineParams, nx, kx, tx, bcoef, fval, xval, &
                                          nxv, w1_1d, extrap, ff, splineXDerivMinFunc, setSplineTarget, minFunc, &
                                          finaliseSplineParams, splineMinFunc
-   use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path, len
+   use tomlf, only: toml_table, toml_load, toml_array, get_value, toml_path, len, toml_stat
    use stdlib_str2num, only: to_num
    use stdlib_strings, only: find, slice, replace_all, chomp
    use stdlib_math, only: linspace
@@ -11,17 +11,17 @@ module AniGFAna__flowAna
    use bspline_module, only: db1ink, db1val
    use root_module, only: root_scalar
    implicit none(external)
-
+   character(len=128), parameter :: flowBase = 'flow.NAME_xiXI_eEPS_tTMAX.ICON'
    private
 
    public :: constructIconList, processToml, loadData, w0Calcs, xigCalcs, spacingCalcs
 
 contains
 
-   subroutine loadData(xiList, xiPath, thisFlow, runName, ncon, iconList, flowTime, gact4i, gactij)
+   subroutine loadData(xiList, xiPath, runName, ncon, iconList, eps, tmax, flowTime, gact4i, gactij)
       ! Loads the data from all the csv's
       character(len=128), dimension(:), intent(in) :: xiList, runName
-      character(len=*), intent(in) :: xiPath, thisFlow
+      character(len=*), intent(in) :: xiPath, eps, tmax
       integer, intent(in) :: ncon
       type(raggedIntArr), dimension(:), intent(in) :: iconList
       real(kind=WP), dimension(:), allocatable, intent(out) :: flowTime
@@ -40,8 +40,10 @@ contains
          icon = 1
          do aa = 1, SIZE(runName)
             xiBase = replace_all(xiPath, "RE", TRIM(xiList(xx)))
-            anaFlow = replace_all(thisFlow, "XI", TRIM(xiList(xx)))
+            anaFlow = replace_all(runName(aa), "XI", TRIM(xiList(xx)))
             anaFlow = replace_all(anaFlow, "NAME", TRIM(runName(aa)))
+            anaFlow = replace_all(anaFlow, "EPS", trim(eps))
+            anaFlow = replace_all(anaFlow, "TMAX", trim(tmax))
             do ii = 1, SIZE(iconList(aa)%rag)
                ! Convert into to string
                write (iconStr, '(i0)') iconList(aa)%rag(ii)
@@ -216,12 +218,13 @@ contains
    end subroutine w0Calcs
 
    subroutine processToml(tomlName, producer, eps, tMax, anaDir, xiPath, xiList, &
-                          xiNumList, runName, iStart, iEnd, iSkip, iSep, targws, targwt, w0PhysMean, w0PhysErr)
+        xiNumList, runName, dataName, iStart, iEnd, iSkip, &
+        iSep, targws, targwt, w0PhysMean, w0PhysErr)
       ! Get all the values for the toml
       ! this toml is so much harder than doing it in python...
       character(len=*), intent(in) :: tomlName
       character(len=:), allocatable, intent(out) :: producer, eps, tMax, anaDir, xiPath
-      character(len=128), dimension(:), allocatable, intent(out) :: xiList, runName
+      character(len=128), dimension(:), allocatable, intent(out) :: xiList, runName, dataName
       real(kind=WP), dimension(:), allocatable, intent(out) :: xiNumList
       integer, dimension(:), allocatable, intent(out) :: iStart, iEnd, iSep
       type(raggedIntArr), dimension(:), allocatable, intent(out) :: iSkip
@@ -233,6 +236,7 @@ contains
       type(toml_table), allocatable :: table
       type(toml_array), pointer :: top_array, nested_array
       character(len=:), allocatable :: strRead
+      integer :: tomlStatus
       integer :: ii, data_len, jj
 
       call toml_load(table, tomlName)
@@ -261,6 +265,22 @@ contains
       end do
       ! Make an array of the xi in numbers
       xiNumList = to_num(xiList, xiNumList)
+      ! If xiREList is present, then put that in xiList instead
+      call get_value(table, toml_path("data", "xiREList"), top_array, requested=.false., stat=tomlStatus)
+      if( tomlStatus == toml_stat%success) then
+         if (LEN(top_array) == data_len) then
+            do ii=1, data_len
+               call get_value(top_array, ii, strRead)
+               xiList(ii) = strRead
+               deallocate(strRead)
+            end do
+         else
+            write(*,*) 'len(xiREList) != len(xiList)'
+            write(*,*) LEN(top_array), data_len
+            write(*,*) 'Exiting'
+            stop
+         end if
+      end if
       ! runName
       call get_value(table, toml_path("data", "runName"), top_array)
       data_len = LEN(top_array)
@@ -270,6 +290,42 @@ contains
          runName(ii) = strRead
          deallocate (strRead)
       end do
+      ! dataName
+      ! dataName is optional
+      call get_value(table, toml_path("data", "dataName"), top_array, requested=.false., stat=tomlStatus)
+      if (tomlStatus /= toml_stat%success) then
+         ! Fill dataName with runName instead as dataName not found
+         call get_value(table, toml_path("data", "runName"), top_array)
+         data_len = LEN(top_array)
+         allocate (dataName(data_len))
+         do ii = 1, data_len
+            call get_value(top_array, ii, strRead)
+            dataName(ii) = replace_all(flowBase, 'NAME', strRead)
+            deallocate (strRead)
+         end do
+      else
+         ! dataName exists
+         ! dataName is same length as runName
+         allocate(dataName(data_len))
+         if (LEN(top_array) == 1) then
+            ! Fill all with identical name
+            call get_value(top_array, 1, strRead)
+            dataName(:) = strRead
+            deallocate(strRead)
+         else if (LEN(top_array) == data_len) then
+            ! possibily unique names per runName
+            do ii=1, LEN(top_array)
+               call get_value(top_array, ii, strRead)
+               dataName(ii) = strRead
+               deallocate(strRead)
+            end do
+         else
+            write(*,*) 'dataName must either have length 1 (still a list)'
+            write(*,*) 'or must have equal length as runName'
+            write(*,*) 'Exiting'
+            stop
+         end if
+      end if
       ! iStart
       call get_value(table, toml_path("data", "iStart"), top_array)
       do ii = 1, LEN(top_array)

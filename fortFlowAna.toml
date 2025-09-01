@@ -1,0 +1,55 @@
+[data]
+# This is required but not actually used
+producer = 'Bors'
+#Path to the folders containing the data files
+#RE is replaced by each xi in xiREList
+xiPath = '/home/ryan/Documents/2025/Gen2P'
+#The list of xi's to load
+xiList = [ '3.0', '3.5', '4.0', '4.3', '4.5']
+# xiReList is optional, if not present it is set to xiList
+xiREList = ['30', '35', '40', '43', '45']
+#A list of the run name (i.e. Tune45_256x24)
+runName = [ 'Tune1_cfg' ]
+# if dataName is not present, it is set to a default
+#'flow.NAME_xiXI_eEPS_tTMAX.ICON'
+# NAME is replaced with runName, EPS is replaced with eps, TMAX with tmax
+# dataName must be length 1 or match runName in length
+dataName = ['flow.Tune1_cfg_ICON.nersc_xiXI']
+#What configs to load
+#Load between iStart, iEnd, inclusive
+#Matched lists with the run name
+iStart = [1000]
+#iEnd = [247,58]
+iEnd = [1040]
+#Skipping configs
+# This is a list of lists if you have multiple runNames
+iSkip = [[
+      1001, 1002, 1003,
+      1005, 1006, 1007,
+      1009, 1010, 1011,
+      1013, 1014, 1015,
+      1017, 1018, 1019,
+      1021, 1022, 1023,
+      1025, 1026, 1027,
+      1029, 1030, 1031,
+      1033, 1034, 1035,
+      1037, 1038, 1039,
+      ]]
+#details about the wilson flow (which are in the file name) (strings)
+#The separation between flow times
+eps = '0.002'
+#the max flow time
+tMax = '2.5'
+
+[analysis]
+
+#Targets for getting w_s, w_t
+targws = 0.15
+targwt = 0.15
+# output folder
+anaDir = '/home/ryan/Documents/2025/Gen2P/results_fort/no2_5'
+#the value of w_0 Phys (in fm ), t0Phys in fm**2, and t0/w0 in fm
+# FLAG AVERAGES 2+1
+w0Phys = '0.17355(92)'
+# fitFuncs does not do anything for the fotran code and is not even read
+fitFuncs = [ 'Linear', 'Quadratic', 'Cubic' ]

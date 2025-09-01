@@ -10,7 +10,7 @@ program w0RE
    implicit none(external)
    ! Input params
    character(len=:), allocatable :: producer, eps, tMax, anaDir, w0PhysStr, xiPath
-   character(len=128), dimension(:), allocatable :: xiList, runName
+   character(len=128), dimension(:), allocatable :: xiList, runName, dataName
    real(kind=WP), dimension(:), allocatable :: xiNumList
    integer, dimension(:), allocatable :: iStart, iEnd, iSep
    type(raggedIntArr), dimension(:), allocatable :: iSkip
@@ -19,7 +19,6 @@ program w0RE
    character(len=128) :: tomlName
    type(raggedIntArr), dimension(:), allocatable :: iconList
    character(len=128) :: xiBase, thisFlow, anaFlow, iconStr
-   character(len=128), parameter :: flowBase = 'flow.NAME_xiXI_eEPS_tTMAX.ICON'
    ! counters
    integer :: xx, icon, ncon, aa, ii
    real(kind=WP), dimension(:), allocatable :: flowTime
@@ -59,14 +58,16 @@ program w0RE
    ! Setup and Get all the parameters from the input toml file
    !call processToml('/home/ryan/Documents/2024/Gen2/G2_wflow.toml', producer, eps, &
    call processToml(TRIM(tomlName), producer, eps, &
-                    tMax, anaDir, xiPath, xiList, xiNumList, runName, iStart, iEnd, iSkip, iSep, &
-                    targws, targwt, w0PhysMean, w0PhysErr)
+        tMax, anaDir, xiPath, xiList, xiNumList, runName, dataName, &
+        iStart, iEnd, iSkip, iSep, &
+        targws, targwt, w0PhysMean, w0PhysErr)
 
    write (*, *) 'mkdir -p '//TRIM(anaDir)
    call system('mkdir -p '//TRIM(anaDir))
 
-   thisFlow = replace_all(flowBase, 'EPS', TRIM(eps))
-   thisFlow = replace_all(thisFlow, 'TMAX', TRIM(tmax))
+   
+   !thisFlow = replace_all(flowBase, 'EPS', TRIM(eps))
+   !thisFlow = replace_all(thisFlow, 'TMAX', TRIM(tmax))
    allocate (iconList(SIZE(runName)))
    ncon = 0
    do aa = 1, SIZE(runName)
@@ -74,7 +75,7 @@ program w0RE
       ncon = ncon + SIZE(iconList(aa)%rag)
    end do
    ! Load the data
-   call loadData(xiList, xiPath, thisFlow, runName, ncon, iconList, flowTime, gact4i, gactij)
+   call loadData(xiList, xiPath, dataName, ncon, iconList, eps, tmax, flowTime, gact4i, gactij)
    ! Do Jackknifes
    allocate (JE4i(SIZE(flowTime), SIZE(xiList), 0:ncon), JEij(SIZE(flowTime), SIZE(xiList), 0:ncon))
    do ii = 1, SIZE(flowTime)
@@ -311,7 +312,7 @@ program w0RE
       call csvf%close(status_ok)
    end do
 
-   deallocate (runName, xiList, xiNumList)
+   deallocate (runName, dataName, xiList, xiNumList)
    deallocate (iStart, iEnd, iSep, iSkip)
    deallocate (iconList)
    deallocate (flowTime, gact4i, gactij)
