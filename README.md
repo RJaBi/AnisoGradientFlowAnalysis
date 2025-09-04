@@ -61,3 +61,32 @@ The repo also comes with a pre-commit that will ensure a formatting for your For
 python -m pip install pre-commit
 pre-commit install
 ```
+
+--- 
+## Dependencies:
+```mermaid
+flowchart TB
+  N1[AniGFAna]
+  N2[test-drive]
+  N3[bspline-fortran]
+  N4[pyplot-fortran]
+  N5[roots-fortran]
+  N6[toml-f]
+  N7[csv-fortran]
+  N8[FJsample]
+  click N2 href "https://github.com/fortran-lang/test-drive" "The simple testing framework"
+  click N3 href "https://github.com/jacobwilliams/bspline-fortran" "Multidimensional B-Spline Interpolation of Data on a Regular Grid"
+  click N4 href "https://github.com/jacobwilliams/pyplot-fortran" "A simple module for generating plots from Fortran using Python's matplotlib.pyplot."
+  click N5 href "https://github.com/jacobwilliams/roots-fortran" "A library for finding the roots of continuous scalar functions of a single real variable"
+  click N6 href "https://toml-f.github.io/toml-f" "TOML parser implementation for data serialization and deserialization"
+  click N7 href "https://github.com/jacobwilliams/csv-fortran" "Read and Write CSV Files Using Modern Fortran"
+  click N8 href "https://github.com/RJaBi/FJsample" "Jackknife & bootstrap resampling in Fortran with python bindings"
+  N1-->N2
+  N1-->N3
+  N1-->N4
+  N1-->N5
+  N1-->N6
+  N1-->N7
+  N1-->N8
+```
+
