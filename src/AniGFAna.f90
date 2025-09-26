@@ -1,5 +1,5 @@
 module AniGFAna
-   use AniGFAna__types, only: WP, WC, raggedIntArr
+   use AniGFAna__types, only: WP, WC, raggedIntArr, DP
    use AniGFAna__colours, only: col_blue, col_orange, col_red, &
                                 col_teal, col_green, col_yellow, &
                                 col_purple, col_pink, col_brown, &
@@ -12,7 +12,7 @@ module AniGFAna
    implicit none(external)
    private
 
-   public :: WP, raggedIntArr
+   public :: WP, raggedIntArr, DP
    public :: col_red, col_blue, col_black, col_green
 
    public :: loadData, w0Calcs, xigCalcs, processToml, constructIconList, spacingCalcs

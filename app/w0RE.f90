@@ -1,10 +1,11 @@
 program w0RE
-   use AniGFAna, only: WP, constructIconList, raggedIntArr, processToml, &
+   use AniGFAna, only: WP, DP, constructIconList, raggedIntArr, processToml, &
                        loadData, w0Calcs, col_red, col_blue, col_black, xigCalcs, col_green, spacingCalcs
    use stdlib_strings, only: replace_all
    use stdlib_io_npy, only: save_npy
    use stdlib_math, only: linspace
-   use pyplot_module, only: pyplot
+   !use pyplot_module, only: pyplot
+   use fortplot, only: figure_t
    use csv_module, only: csv_file
    use FJSample, only: complement, jackError
    implicit none(external)
@@ -24,8 +25,10 @@ program w0RE
    real(kind=WP), dimension(:), allocatable :: flowTime
    real(kind=WP), dimension(:, :, :), allocatable :: gact4i, gactij  !, topcharge, ! flowTime, xi, icon
    ! Plotting vars
-   type(pyplot) :: plt
-   integer :: istat
+   !type(pyplot) :: plt
+   !integer :: istat
+   type(figure_t) :: plt
+   !
    real(kind=WP), dimension(:, :, :), allocatable :: wijSplineEval, w4iSplineEval  ! t, xi, 0:ncon
    real(kind=WP), dimension(:), allocatable :: plotXVal, plotVal, plotErr  ! t
    real(kind=WP), dimension(:, :), allocatable :: RESplineEval, a_sSplineEval
@@ -58,14 +61,13 @@ program w0RE
    ! Setup and Get all the parameters from the input toml file
    !call processToml('/home/ryan/Documents/2024/Gen2/G2_wflow.toml', producer, eps, &
    call processToml(TRIM(tomlName), producer, eps, &
-        tMax, anaDir, xiPath, xiList, xiNumList, runName, dataName, &
-        iStart, iEnd, iSkip, iSep, &
-        targws, targwt, w0PhysMean, w0PhysErr)
+                    tMax, anaDir, xiPath, xiList, xiNumList, runName, dataName, &
+                    iStart, iEnd, iSkip, iSep, &
+                    targws, targwt, w0PhysMean, w0PhysErr)
 
    write (*, *) 'mkdir -p '//TRIM(anaDir)
    call system('mkdir -p '//TRIM(anaDir))
 
-   
    !thisFlow = replace_all(flowBase, 'EPS', TRIM(eps))
    !thisFlow = replace_all(thisFlow, 'TMAX', TRIM(tmax))
    allocate (iconList(SIZE(runName)))
@@ -98,28 +100,34 @@ program w0RE
                 plotXVal, wijSplineEval, w4iSplineEval, flowTimeForW0, w0ij, w04i)
    ! Plot the W_{ij/4i} data
    allocate (plotVal(SIZE(plotXVal)), plotErr(SIZE(plotXVal)))
+   call plt%initialize(width=1660, height=1160)
    do xx = 1, SIZE(xiList)
-      call plt%initialize(grid=.TRUE., xlabel='$\\tau / a_s$', &
-                          legend=.TRUE.)
+      !call plt%initialize(grid=.TRUE., xlabel='$\\tau / a_s$', &
+      !                    legend=.TRUE.)
+      call plt%clear()
+      call plt%set_xlabel('\tau / a_s')
       ! First do wij
       do ii = 1, SIZE(plotXVal)
          call jackError(ncon, wijSplineEval(ii, xx, :), plotErr(ii))
       end do
       ! plot mean
       plotVal = wijSplineEval(:, xx, 0)
-      call plt%add_plot(plotXVal, plotVal, &
-                        label='$W_{ij}$', &
-                        linestyle='--', markersize=0, linewidth=2, istat=istat, color=col_blue)
+      !call plt%add_plot(plotXVal, plotVal, &
+      !                  label='$W_{ij}$', &
+      !                  linestyle='--', markersize=0, linewidth=2, istat=istat, color=col_blue)
+      call plt%add_fill_between(plotXVal, plotVal - plotErr, plotVal + plotErr, alpha=0.15_DP, color='blue')
+      call plt%add_plot(plotXVal, plotVal, label='W_{ij}')
       ! plot mean + err
       plotVal = wijSplineEval(:, xx, 0) + plotErr
-      call plt%add_plot(plotXVal, plotVal, &
-                        linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_blue)
+      !call plt%add_plot(plotXVal, plotVal, &
+      !                  linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_blue)
       ! plot mean - err
       plotVal = wijSplineEval(:, xx, 0) - plotErr
-      call plt%add_plot(plotXVal, plotVal, &
-                        linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_blue)
-      call plt%savefig(TRIM(anaDir)//'/fortW0RE_'//TRIM(xiList(xx))//'.pdf', istat=istat, &
-                       pyfile=TRIM(anaDir)//'/fortW0RE_'//TRIM(xiList(xx))//'.py')
+      !call plt%add_plot(plotXVal, plotVal, &
+      !                  linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_blue)
+      !call plt%savefig(TRIM(anaDir)//'/fortW0RE_'//TRIM(xiList(xx))//'.pdf', istat=istat, &
+      !                       pyfile=TRIM(anaDir)//'/fortW0RE_'//TRIM(xiList(xx))//'.py')
+      call plt%savefig(TRIM(anaDir)//'/fortW0RE_'//TRIM(xiList(xx))//'.pdf')
       ! Then do w4i
       do ii = 1, SIZE(plotXVal)
          call jackError(ncon, w4iSplineEval(ii, xx, :), plotErr(ii))
@@ -128,23 +136,23 @@ program w0RE
       plotVal = w4iSplineEval(:, xx, 0)
       !write(*,*) w4iSplineEval(:, xx, 1)
       !stop
-      call plt%add_plot(plotXVal, plotVal, &
-                        label='$W_{4i}$', &
-                        linestyle='--', markersize=0, linewidth=2, istat=istat, color=col_red)
+      !call plt%add_plot(plotXVal, plotVal, &
+      !                  label='$W_{4i}$', &
+      !                  linestyle='--', markersize=0, linewidth=2, istat=istat, color=col_red)
       ! plot mean + err
       plotVal = w4iSplineEval(:, xx, 0) + plotErr
-      call plt%add_plot(plotXVal, plotVal, &
-                        linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
+      !call plt%add_plot(plotXVal, plotVal, &
+      !                  linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
       ! plot mean - err
       plotVal = w4iSplineEval(:, xx, 0) - plotErr
-      call plt%add_plot(plotXVal, plotVal, &
-                        linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
+      !call plt%add_plot(plotXVal, plotVal, &
+      !                  linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
       ! plot target
       plotVal = targws
-      call plt%add_plot(plotXVal, plotVal, &
-                        linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_black)
-      call plt%savefig(TRIM(anaDir)//'/fortW0RE_'//TRIM(xiList(xx))//'.pdf', &
-                       istat=istat, pyfile=TRIM(anaDir)//'/fortW0RE_'//TRIM(xiList(xx))//'.py')
+      !call plt%add_plot(plotXVal, plotVal, &
+      !linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_black)
+      !call plt%savefig(TRIM(anaDir)//'/fortW0RE_'//TRIM(xiList(xx))//'.pdf', &
+      !                 istat=istat, pyfile=TRIM(anaDir)//'/fortW0RE_'//TRIM(xiList(xx))//'.py')
    end do
 
    allocate (RE(SIZE(xiList), 0:ncon))
@@ -155,53 +163,53 @@ program w0RE
    write (*, *) 'xig is ', xig(0), ' +- ', val
 
    ! Plot
-   call plt%initialize(grid=.TRUE., xlabel='$\\xi_{in}$', &
-                       legend=.TRUE.)
+   !call plt%initialize(grid=.TRUE., xlabel='$\\xi_{in}$', &
+   !                    legend=.TRUE.)
    do ii = 1, SIZE(plotXVal)
       call jackError(ncon, RESplineEval(ii, :), plotErr(ii))
    end do
    ! plot the spline
    plotVal = RESplineEval(:, 0)
-   call plt%add_plot(plotXVal, plotVal, &
-                     linestyle='-', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
+   !call plt%add_plot(plotXVal, plotVal, &
+   !                  linestyle='-', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
    ! plot mean + err
    plotVal = RESplineEval(:, 0) + plotErr
-   call plt%add_plot(plotXVal, plotVal, &
-                     linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
+   !call plt%add_plot(plotXVal, plotVal, &
+   !                  linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
    ! plot mean - err
    plotVal = RESplineEval(:, 0) - plotErr
-   call plt%add_plot(plotXVal, plotVal, &
-                     linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
+   !call plt%add_plot(plotXVal, plotVal, &
+   !                  linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
    ! Now do the points
    deallocate (plotErr)
    allocate (plotErr(SIZE(xiNumList)))
    do xx = 1, SIZE(xiNumList)
       call jackError(ncon, RE(xx, :), plotErr(xx))
    end do
-   call plt%add_errorbar(xiNumList, RE(:, 0), label='', &
-                         color=col_blue, istat=istat, linestyle='o', markersize=4, linewidth=0, yerr=plotErr)
+   !call plt%add_errorbar(xiNumList, RE(:, 0), label='', &
+   !                      color=col_blue, istat=istat, linestyle='o', markersize=4, linewidth=0, yerr=plotErr)
    plotVal = 1.0_WP
-   call plt%add_plot(plotXVal, plotVal, &
-                     linestyle='--', markersize=0, linewidth=2, istat=istat, label='$target$', color=col_black)
+   !call plt%add_plot(plotXVal, plotVal, &
+   !                  linestyle='--', markersize=0, linewidth=2, istat=istat, label='$target$', color=col_black)
    plotXVal = xig(0)
    plotVal = linspace(MINVAL(RE(:, 0)), MAXVAL(RE(:, 0)), SIZE(plotXVal))
    write (plotStr, '(f10.6,a,f7.6)') xig(0), '$ +- $0', val
-   call plt%add_plot(plotXVal, plotVal, &
-                     linestyle='-', markersize=0, linewidth=2, istat=istat, &
-                     label='$\\xi_{g} = '//TRIM(plotStr)//'$', color=col_green)
-   call plt%add_plot(plotXVal + val, plotVal, &
-                     linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_green)
-   call plt%add_plot(plotXVal - val, plotVal, &
-                     linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_green)
-   call plt%savefig(TRIM(anaDir)//'/fortW0RE_RE.pdf', istat=istat, pyfile=TRIM(anaDir)//'/fortW0RE_RE.py')
+   !call plt%add_plot(plotXVal, plotVal, &
+   !                  linestyle='-', markersize=0, linewidth=2, istat=istat, &
+   !                  label='$\\xi_{g} = '//TRIM(plotStr)//'$', color=col_green)
+   !call plt%add_plot(plotXVal + val, plotVal, &
+   !                  linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_green)
+   !call plt%add_plot(plotXVal - val, plotVal, &
+   !                  linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_green)
+   !call plt%savefig(TRIM(anaDir)//'/fortW0RE_RE.pdf', istat=istat, pyfile=TRIM(anaDir)//'/fortW0RE_RE.py')
    ! Do the lattice spacing
    ! deallocate(plotXVal)
    allocate (a_sSplineEval(SIZE(flowTime) * 2, 0:ncon), a_s(0:ncon), a_t(0:ncon))
    call spacingCalcs(flowTimeForW0, xiNumList, xig, SIZE(flowTime) * 2, w0PhysMean, w0PhysErr, a_sSplineEval, plotXVal, a_s, a_sSys)
    a_t = a_s / xig  ! clearly statistical only
 
-   call plt%initialize(grid=.TRUE., xlabel='$\\xi_{in}$', &
-                       legend=.TRUE.)
+   !call plt%initialize(grid=.TRUE., xlabel='$\\xi_{in}$', &
+   !                    legend=.TRUE.)
 
    ! Plot the spline
    deallocate (plotErr)
@@ -211,16 +219,16 @@ program w0RE
    end do
    ! plot the spline
    plotVal = a_sSplineEval(:, 0)
-   call plt%add_plot(plotXVal, plotVal, &
-                     linestyle='-', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
+   !call plt%add_plot(plotXVal, plotVal, &
+   !                  linestyle='-', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
    ! plot mean + err
    plotVal = a_sSplineEval(:, 0) + plotErr
-   call plt%add_plot(plotXVal, plotVal, &
-                     linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
+   !call plt%add_plot(plotXVal, plotVal, &
+   !                  linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
    ! plot mean - err
    plotVal = a_sSplineEval(:, 0) - plotErr
-   call plt%add_plot(plotXVal, plotVal, &
-                     linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
+   !call plt%add_plot(plotXVal, plotVal, &
+   !                  linestyle=':', markersize=0, linewidth=2, istat=istat, label='', color=col_red)
    ! Plot the lattice spacing horizontally
    plotXVal = linspace(MINVAL(xiNumList), MAXVAL(xiNumList), SIZE(plotXVal))
    plotVal = a_s(0)
@@ -228,27 +236,27 @@ program w0RE
    write (plotStr, '(f10.6,a,f7.6,a,f7.6,a,f7.6,a)') a_s(0), &
       '(0', val, ')(0', a_sSys, ')[0', (val**2.0_WP + a_sSys**2.0_WP)**0.5_WP, ']'
    val = (val**2.0_WP + a_sSys**2.0_WP)**0.5_WP
-   call plt%add_plot(plotXVal, plotVal, &
-                     linestyle='-', markersize=0, linewidth=2, istat=istat, label='$a_{s} = '//TRIM(plotStr)//'$', color=col_green)
-   call plt%add_plot(plotXVal + val, plotVal, &
-                     linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_green)
-   call plt%add_plot(plotXVal - val, plotVal, &
-                     linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_green)
+   !call plt%add_plot(plotXVal, plotVal, &
+   !                  linestyle='-', markersize=0, linewidth=2, istat=istat, label='$a_{s} = '//TRIM(plotStr)//'$', color=col_green)
+   !call plt%add_plot(plotXVal + val, plotVal, &
+   !                  linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_green)
+   !call plt%add_plot(plotXVal - val, plotVal, &
+   !                  linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_green)
 
    ! Plot the anisotropy vertically
    plotXVal = xig(0)
    !plotVal = linspace(minval(RE(:,0)), maxval(RE(:,0)), size(plotXVal))
    plotVal = linspace(MINVAL(a_sSplineEval(:, 0)), MAXVAL(a_sSplineEval(:, 0)), SIZE(plotXVal))
    write (plotStr, '(f10.6,a,f7.6)') xig(0), '$ +- $0', val
-   call plt%add_plot(plotXVal, plotVal, &
-                     linestyle='-', markersize=0, linewidth=2, istat=istat, &
-                     label='$\\xi_{g} = '//TRIM(plotStr)//'$', color=col_black)
-   call plt%add_plot(plotXVal + val, plotVal, &
-                     linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_black)
-   call plt%add_plot(plotXVal - val, plotVal, &
-                     linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_black)
+   !call plt%add_plot(plotXVal, plotVal, &
+   !                  linestyle='-', markersize=0, linewidth=2, istat=istat, &
+   !                  label='$\\xi_{g} = '//TRIM(plotStr)//'$', color=col_black)
+   !call plt%add_plot(plotXVal + val, plotVal, &
+   !                  linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_black)
+   !call plt%add_plot(plotXVal - val, plotVal, &
+   !                  linestyle='--', markersize=0, linewidth=2, istat=istat, label='', color=col_black)
 
-   call plt%savefig(TRIM(anaDir)//'/fortW0RE_as.pdf', istat=istat, pyfile=TRIM(anaDir)//'/fortW0RE_as.py')
+   !call plt%savefig(TRIM(anaDir)//'/fortW0RE_as.pdf', istat=istat, pyfile=TRIM(anaDir)//'/fortW0RE_as.py')
    ! Now do the points
    call jackError(ncon, a_s, val)  ! recalculate the stat error
    write (*, *) 'a_s is ', a_s(0), '+- (stat) ', val, '+- (sys)', a_sSys, &

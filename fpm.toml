@@ -37,6 +37,7 @@ toml-f 	    = { git = "https://github.com/toml-f/toml-f" }
 csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
 #FJsample = { git="https://github.com/RJabi/FJsample.git", preprocess.cpp.macros=['LOCALITYSUPPORT=1'] }  # use if using modern compiler (gfortran15+, IFX 2024+, NVHPC)
 FJsample = { git="https://github.com/RJabi/FJsample.git"}
+fortplot = { git = "https://github.com/lazy-fortran/fortplot" }
 
 
 [extra.fortitude.check]
