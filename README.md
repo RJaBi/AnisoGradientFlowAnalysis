@@ -31,7 +31,7 @@ This can be done using the `app/processPyErrors.py` python program which uses th
 python processPyErrors.py /scratch/dp006/dc-bign2/gen3/NF2P1/wflow/256x24_Analysis/SYM/FortJacks.csv 256x24 0.17355 0.00092 FLAG
 ```
 
-By default it will print redo the analysis assuming no auto-correlation (S=0.0) and with the standard py-errors value (S=2.0)
+By default it will redo & print the analysis assuming no auto-correlation (S=0.0) and with the standard py-errors value (S=2.0). It will also save pyerrors forms of $\xi_g$, $a_s$, $a_\tau$ and $w_0^{Phys}$ to i.e. `/scratch/dp006/dc-bign2/gen3/NF2P1/wflow/256x24_Analysis/SYM/jacks_Pyerrors.json.gz`.
 
 
 ---
