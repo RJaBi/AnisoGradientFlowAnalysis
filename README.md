@@ -25,6 +25,15 @@ Additionally we save a set of csv files containing the bootstraps or the jackkni
 
 In the future, the correct way to update the spacing if $w_0^{Phys}$ is updated and you don't want to rerun the analysis is to use the `w0ij(xig)` column of i.e. `Fort{Jacks/Boots}.csv`. This is the value for the $w_0-scale$ evaluated at the (interpolated) value of $\xi_g$. This could also be imported into i.e. [pyerrors](https://github.com/fjosw/pyerrors), a python data analysis suite that uses the $\Gamma$-method to determine the autocorrelation.
 
+This can be done using the `app/processPyErrors.py` python program which uses the jackknife version `w0RE`. It can be run using i.e.
+
+```
+python processPyErrors.py /scratch/dp006/dc-bign2/gen3/NF2P1/wflow/256x24_Analysis/SYM/FortJacks.csv 256x24 0.17355 0.00092 FLAG
+```
+
+By default it will print redo the analysis assuming no auto-correlation (S=0.0) and with the standard py-errors value (S=2.0)
+
+
 ---
 ## Building
 This repository uses the [fortran-lang/fpm](https://github.com/fortran-lang/fpm) to build. See the instructions below on how to get this. This package manager automatically gets the quired dependencies from GitHub. If there is no internet connection or git available you will need acquire them manually and then modify the `fpm.toml` file to i.e.
@@ -62,7 +71,7 @@ python -m pip install pre-commit
 pre-commit install
 ```
 
---- 
+---
 ## Dependencies:
 ```mermaid
 flowchart TB
@@ -89,4 +98,3 @@ flowchart TB
   N1-->N7
   N1-->N8
 ```
-
