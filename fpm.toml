@@ -29,14 +29,14 @@ source-form = "free"
 
 [dependencies]
 stdlib = '*'
-test-drive = { git = "https://github.com/fortran-lang/test-drive.git" }
+# test-drive = { git = "https://github.com/fortran-lang/test-drive.git" }
 bspline-fortran = { git="https://github.com/jacobwilliams/bspline-fortran.git" }
 pyplot-fortran = { git="https://github.com/jacobwilliams/pyplot-fortran.git" }
 roots-fortran = { git="https://github.com/jacobwilliams/roots-fortran.git" }
 toml-f 	    = { git = "https://github.com/toml-f/toml-f" }
 csv-fortran = { git="https://github.com/jacobwilliams/csv-fortran.git" }
-#FJsample = { git="https://github.com/RJabi/FJsample.git", preprocess.cpp.macros=['LOCALITYSUPPORT=1'] }  # use if using modern compiler (gfortran15+, IFX 2024+, NVHPC)
-FJsample = { git="https://github.com/RJabi/FJsample.git"}
+#FJsample = { git="https://gitlab.com/fastsum/wilsonflow/FJsample.git", preprocess.cpp.macros=['LOCALITYSUPPORT=1'] }  # use if using modern compiler (gfortran15+, IFX 2024+, NVHPC)
+FJsample = { git="https://gitlab.com/fastsum/wilsonflow/FJsample.git"}
 
 
 [extra.fortitude.check]
