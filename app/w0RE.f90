@@ -4,6 +4,7 @@ program w0RE
    use stdlib_strings, only: replace_all
    use stdlib_io_npy, only: save_npy
    use stdlib_math, only: linspace
+   use stdlib_system, only: make_directory_all
    use pyplot_module, only: pyplot
    use csv_module, only: csv_file
    use FJSample, only: complement, jackError
@@ -58,14 +59,14 @@ program w0RE
    ! Setup and Get all the parameters from the input toml file
    !call processToml('/home/ryan/Documents/2024/Gen2/G2_wflow.toml', producer, eps, &
    call processToml(TRIM(tomlName), producer, eps, &
-        tMax, anaDir, xiPath, xiList, xiNumList, runName, dataName, &
-        iStart, iEnd, iSkip, iSep, &
-        targws, targwt, w0PhysMean, w0PhysErr)
+                    tMax, anaDir, xiPath, xiList, xiNumList, runName, dataName, &
+                    iStart, iEnd, iSkip, iSep, &
+                    targws, targwt, w0PhysMean, w0PhysErr)
 
-   write (*, *) 'mkdir -p '//TRIM(anaDir)
-   call system('mkdir -p '//TRIM(anaDir))
+   !write (*, *) 'mkdir -p '//TRIM(anaDir)
+   !call system('mkdir -p '//TRIM(anaDir))
+   call make_directory_all(TRIM(anaDir))
 
-   
    !thisFlow = replace_all(flowBase, 'EPS', TRIM(eps))
    !thisFlow = replace_all(thisFlow, 'TMAX', TRIM(tmax))
    allocate (iconList(SIZE(runName)))

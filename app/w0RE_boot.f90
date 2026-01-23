@@ -4,6 +4,7 @@ program w0RE_boot
    use stdlib_strings, only: replace_all
    use stdlib_io_npy, only: save_npy
    use stdlib_math, only: linspace
+   use stdlib_system, only: make_directory_all
    use pyplot_module, only: pyplot
    use csv_module, only: csv_file
    use FJSample, only: complement, bootcomplement, stddev
@@ -60,12 +61,13 @@ program w0RE_boot
    end if
    ! Setup and Get all the parameters from the input toml file
    call processToml(TRIM(tomlName), producer, eps, &
-        tMax, anaDir, xiPath, xiList, xiNumList, runName, &
-        dataName, iStart, iEnd, iSkip, iSep, &
-        targws, targwt, w0PhysMean, w0PhysErr)
+                    tMax, anaDir, xiPath, xiList, xiNumList, runName, &
+                    dataName, iStart, iEnd, iSkip, iSep, &
+                    targws, targwt, w0PhysMean, w0PhysErr)
 
-   write (*, *) 'mkdir -p '//TRIM(anaDir)
-   call system('mkdir -p '//TRIM(anaDir))
+   !write (*, *) 'mkdir -p '//TRIM(anaDir)
+   !call system('mkdir -p '//TRIM(anaDir))
+   call make_directory_all(TRIM(anaDir))
 
    allocate (iconList(SIZE(runName)))
    ncon = 0
