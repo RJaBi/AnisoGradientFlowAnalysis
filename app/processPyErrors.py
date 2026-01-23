@@ -9,6 +9,7 @@ python processPyErrors PathToFortJacks.csv ensembleName w0PhysMean w0PhysError w
 
 import pyerrors as pe
 import pandas as pd  # for read_csv
+import numpy as np
 import sys
 import os
 
@@ -18,6 +19,9 @@ gamAutoCorrLab = ['None', 'Std']
 
 def main(args):
     if len(args) != 5:
+        print(
+            'python processPyErrors PathToFortJacks.csv ensembleName w0PhysMean w0PhysError w0PhysName'
+        )
         sys.exit(f'bad number of arguments: {args}')
 
     # Read the csv
@@ -26,9 +30,16 @@ def main(args):
     # 0 is the means
     w0ij_Jack = df['w0ij(xig)'].values
     xig_Jack = df['xig'].values
-    # Make it pyerrors
-    w0ij_PE = pe.import_jackknife(w0ij_Jack, name=args[1])
-    xig_PE = pe.import_jackknife(xig_Jack, name=args[1])
+    # need the mean in the 0th position
+    w0ij_jackArray = np.empty(len(w0ij_Jack) + 1, dtype=w0ij_Jack.dtype)
+    w0ij_jackArray[0] = np.mean(w0ij_Jack)
+    w0ij_jackArray[1:] = w0ij_Jack
+    xig_jackArray = np.empty(len(xig_Jack) + 1, dtype=xig_Jack.dtype)
+    xig_jackArray[0] = np.mean(xig_Jack)
+    xig_jackArray[1:] = xig_Jack
+    # now make it pyerrors
+    w0ij_PE = pe.import_jackknife(w0ij_jackArray, name=args[1])
+    xig_PE = pe.import_jackknife(xig_jackArray, name=args[1])
     # Get the w0Phys value as pyerrors
     w0Phys = pe.cov_Obs(float(args[2]), float(args[3])**2.0, name=args[4])
     # And now calculate spacings
