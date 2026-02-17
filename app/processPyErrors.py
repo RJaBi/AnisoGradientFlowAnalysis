@@ -38,8 +38,11 @@ def main(args):
     xig_jackArray[0] = np.mean(xig_Jack)
     xig_jackArray[1:] = xig_Jack
     # now make it pyerrors
-    w0ij_PE = pe.import_jackknife(w0ij_jackArray, name=args[1])
-    xig_PE = pe.import_jackknife(xig_jackArray, name=args[1])
+    ensName = args[1]
+    if '|' not in ensName:
+        ensName = ensName + '|'
+    w0ij_PE = pe.import_jackknife(w0ij_jackArray, name=ensName)
+    xig_PE = pe.import_jackknife(xig_jackArray, name=ensName)
     # Get the w0Phys value as pyerrors
     w0Phys = pe.cov_Obs(float(args[2]), float(args[3])**2.0, name=args[4])
     # And now calculate spacings
